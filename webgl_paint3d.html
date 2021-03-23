@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Paint 3D</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="https://threejs.org/examples/main.css">
+    <style>
+        body {
+            background-color: #f0f0f0;
+            color: #444;
+        }
+
+        a {
+            color: #08f;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="info">
+        <a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> webgl - paint 3D
+    </div>
+
+    <script type="module">
+
+        import * as THREE from 'https://threejs.org/build/three.module.js';
+        import Stats from 'https://threejs.org/examples/jsm/libs/stats.module.js';
+
+        let container, stats;
+        let camera, controls, scene, raycaster, renderer;
+
+        let brushColor = 0xff0000;
+
+        let CLICKED = false;
+        let INTERSECTED;
+
+        const mouse = new THREE.Vector2();
+
+        init();
+        animate();
+
+        function init() {
+
+            container = document.createElement('div');
+            document.body.appendChild(container);
+
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 10000);
+            camera.position.z = 500;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf0f0f0);
+
+            const light = new THREE.AmbientLight(0xffffff);
+            light.position.set(1, 1, 1).normalize();
+            scene.add(light);
+
+            const geometry = new THREE.BoxGeometry(20, 20, 20);
+
+            let x = 0;
+            let y = 0;
+            let z = 0;
+            for (let i = 0; i < 1000; i++) { // 10^3
+
+                const object = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({
+                    color: 0xffffff,
+                    opacity: 0,
+                    transparent: true
+                }));
+
+                object.position.x = x;
+                object.position.y = y;
+                object.position.z = z;
+
+                scene.add(object);
+
+                x += 20;
+                if (x == 200) {
+                    x = 0;
+                    y += 20;
+
+                    if (y == 200) {
+                        y = 0;
+                        z += 20;
+                    }
+                }
+
+            }
+
+            raycaster = new THREE.Raycaster();
+
+            renderer = new THREE.WebGLRenderer();
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+
+            stats = new Stats();
+            container.appendChild(stats.dom);
+
+            document.addEventListener('mousemove', onDocumentMouseMove);
+            document.addEventListener("mousedown", onDocumentMouseDown);
+            document.addEventListener("mouseup", onDocumentMouseUp);
+
+            //
+
+            window.addEventListener('resize', onWindowResize);
+
+        }
+
+        function onWindowResize() {
+
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+        }
+
+        function onDocumentMouseMove() {
+
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+
+        }
+
+        function onDocumentMouseDown() {
+
+            CLICKED = true;
+            console.log(CLICKED);
+
+        }
+
+        function onDocumentMouseUp() {
+
+            CLICKED = false;
+            console.log(CLICKED);
+
+        }
+
+        //
+
+        function animate() {
+
+            requestAnimationFrame(animate);
+
+            render();
+            stats.update();
+
+        }
+
+        function render() {
+
+            raycaster.setFromCamera(mouse, camera);
+
+            const intersects = raycaster.intersectObjects(scene.children);
+
+            if (intersects.length > 0) {
+
+                if (INTERSECTED != intersects[0].object) {
+
+                    // Eraser
+                    if (INTERSECTED && !CLICKED) {
+                        INTERSECTED.material.opacity = 0;
+                    }
+
+                    INTERSECTED = intersects[0].object;
+                    INTERSECTED.material.color.setHex(brushColor);
+                    INTERSECTED.material.opacity = 1;
+
+                }
+
+            } else {
+
+                // Eraser
+                if (INTERSECTED && !CLICKED) {
+                    INTERSECTED.material.opacity = 0;
+                }
+
+                INTERSECTED = null;
+
+            }
+
+            renderer.render(scene, camera);
+
+        }
+
+    </script>
+
+</body>
+
+</html>
