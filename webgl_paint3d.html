@@ -79,16 +79,19 @@
         import * as THREE from 'https://threejs.org/build/three.module.js';
         import Stats from 'https://threejs.org/examples/jsm/libs/stats.module.js';
         import { PointerLockControls } from './PointerLockControls.js';
+        import { GUI } from 'https://threejs.org/examples/jsm/libs/dat.gui.module.js'
 
         let container, stats;
         let camera, controls, scene, raycaster, renderer;
 
-        let brushColor = 0xff0000;
+        let brushColor = 0x000000;
 
         let CLICKED = false;
         let INTERSECTED;
 
-        const mouse = new THREE.Vector2();
+        const center = new THREE.Vector2();
+        center.x = 0;
+        center.y = 0,5;
 
         let moveForward = false;
         let moveBackward = false;
@@ -161,6 +164,15 @@
 
             stats = new Stats();
             container.appendChild(stats.dom);
+
+            //
+
+            const gui = new GUI();
+
+            let parameters = { color: '#000000' };
+            gui.addColor(parameters, 'color').onChange(function (colorValue) {
+                brushColor = colorValue.replace("#", "0x");
+            });
 
             //
 
@@ -258,7 +270,6 @@
 
             //
 
-            document.addEventListener('mousemove', onDocumentMouseMove);
             document.addEventListener("mousedown", onDocumentMouseDown);
             document.addEventListener("mouseup", onDocumentMouseUp);
 
@@ -277,24 +288,15 @@
 
         }
 
-        function onDocumentMouseMove() {
-
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
-
-        }
-
         function onDocumentMouseDown() {
 
             CLICKED = true;
-            console.log(CLICKED);
 
         }
 
         function onDocumentMouseUp() {
 
             CLICKED = false;
-            console.log(CLICKED);
 
         }
 
@@ -336,7 +338,7 @@
 
         function render() {
 
-            raycaster.setFromCamera(mouse, camera);
+            raycaster.setFromCamera(center, camera);
 
             const intersects = raycaster.intersectObjects(scene.children);
 
